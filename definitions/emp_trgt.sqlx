@@ -1,0 +1,13 @@
+config { type: "incremental",uniqueKey: ["id"], 
+schema: "sos_db",name: "sosdb_emp_trgt"}
+
+
+
+select id,name,source_timestamp,is_deleted  from ( select id,datastream_metadata.uuid,name,
+datastream_metadata.source_timestamp as source_timestamp,
+datastream_metadata.is_deleted,rank() over (partition by id 
+order by TIMESTAMP_MILLIS(datastream_metadata.source_timestamp) desc) 
+latest_record   
+from  ${ref("sos_db", "sosdb_emp")} 
+WHERE datastream_metadata.source_timestamp >=UNIX_MILLIS(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 HOUR)) ) 
+where latest_record = 1 
