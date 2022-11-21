@@ -1,0 +1,6 @@
+{
+  "name": "schedule-job-cdc-poc",
+  "dependencies": {
+    "@dataform/core": "2.0.1"
+  }
+}

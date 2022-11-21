@@ -1,0 +1,12 @@
+config { type: "incremental",uniqueKey: ["id"], 
+schema: "sos_db",name: "sosdb_emp_TRGET"}
+
+
+
+select id,uuid,name,source_timestamp,is_deleted from ( select id,datastream_metadata.uuid,name,
+TIMESTAMP_MILLIS(datastream_metadata.source_timestamp) as source_timestamp,
+datastream_metadata.is_deleted,rank() over (partition by id 
+order by TIMESTAMP_MILLIS(datastream_metadata.source_timestamp) desc) 
+latest_record  from  ${ref("sos_db", "sosdb_emp")}) 
+where latest_record = 1 and is_deleted = FALSE
+

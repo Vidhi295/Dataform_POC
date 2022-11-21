@@ -1,0 +1,5 @@
+config {
+  type: "incremental"
+}
+
+SELECT * FROM dmgcp-del-ce.sos_db.sosdb_emp limit 4

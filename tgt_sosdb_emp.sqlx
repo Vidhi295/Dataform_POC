@@ -1,0 +1,2 @@
+select id,name,datastream_metadata.uuid as UUID,datastream_metadata.source_timestamp as source_timestamp
+, datastream_metadata.is_deleted as is_deleted from 
