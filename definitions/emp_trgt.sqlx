@@ -9,5 +9,7 @@ datastream_metadata.is_deleted,rank() over (partition by id
 order by TIMESTAMP_MILLIS(datastream_metadata.source_timestamp) desc) 
 latest_record   
 from  ${ref("sos_db", "sosdb_emp")} 
-WHERE datastream_metadata.source_timestamp >=UNIX_MILLIS(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 HOUR)) ) 
+${when(incremental(), `where datastream_metadata.source_timestamp > (select max(source_timestamp) from ${self()})`)}
+)
 where latest_record = 1 
+ 
