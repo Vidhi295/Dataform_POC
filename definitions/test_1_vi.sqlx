@@ -1,0 +1,4 @@
+config { type: "table" }
+
+SELECT * FROM sos_db.sosdb_CUSTOMERS")}
+
