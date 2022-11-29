@@ -1,0 +1,5 @@
+config { type: "operations",
+hasOutput: true}
+
+insert into ${self()} values(21,"ABC")
+insert into ${self()} values(22,"ABCD")

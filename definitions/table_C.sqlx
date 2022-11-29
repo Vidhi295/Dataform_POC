@@ -1,0 +1,5 @@
+config { type: "table",uniqueKey: ["id"], 
+schema: "sos_db",name: "table_C"}
+
+select A.id,A.Name from ${ref("table_A")} as A inner join ${ref("table_B")} as B
+on A.id=B.id

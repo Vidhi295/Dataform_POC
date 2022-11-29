@@ -1,10 +1,7 @@
 config { type: "table",uniqueKey: ["id"], 
 schema: "sos_db",name: "table_A"}
 
-insert into sos_db.table_A (id,Name) 
- 
-SELECT 1,"datametica"  
-UNION ALL   
-SELECT 2,"Google"  
-UNION ALL  
-SELECT 2,"Facebook"
+
+select * from dmgcp-del-ce.sos_db.table_A
+UNION ALL
+select * from ${ref("table_D_custom_operation")}
