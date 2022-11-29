@@ -1,0 +1,1 @@
+SELECT count(*) FROM `dmgcp-del-ce.DB_CE_TEMP.1_Job_Log_SP`
