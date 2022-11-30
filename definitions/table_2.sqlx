@@ -1,0 +1,13 @@
+config { type: "table",schema:"sos_db"}
+
+select * from sos_db.table_1
+
+pre_operations {
+    create or replace table sos_db.table_1 (id INTEGER,name_id  STRING);
+    insert into sos_db.table_1 select * from ${ref("table_A")}
+}
+
+post_operations {
+    create or replace table sos_db.table_3 (id INTEGER,name_id  STRING);
+    insert into sos_db.table_3 values(100,"test100")
+}

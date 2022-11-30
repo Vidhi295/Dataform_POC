@@ -1,7 +1,3 @@
 confid{type: table}
 
-post_operations {
- select * from sos_db.table_A
-}
 
-select * from sos_db.table_B

@@ -1,5 +1,5 @@
-config { type: "operations",
+config { type: "operations",schema: "sos_db",
 hasOutput: true}
 
-insert into ${self()} values(21,"ABC")
+insert into ${self()} values(21,"ABC");
 insert into ${self()} values(22,"ABCD")
