@@ -3,6 +3,7 @@
   "assertionSchema": "dataform_assertions",
   "warehouse": "bigquery",
   "defaultDatabase": "dmgcp-del-ce",
-  "defaultLocation": "US"
+  "defaultLocation": "US",
+  "vars": {"run_file":"Vidhi295-patch-1"}
 }
     
