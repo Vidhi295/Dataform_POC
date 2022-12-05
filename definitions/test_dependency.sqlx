@@ -1,0 +1,2 @@
+config { type : "operations",dependencies: "table_A" }
+select 1;

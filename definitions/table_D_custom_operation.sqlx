@@ -2,4 +2,5 @@ config { type: "operations",schema: "sos_db",
 hasOutput: true}
 
 insert into ${self()} values(21,"ABC");
-insert into ${self()} values(22,"ABCD")
+insert into ${self()} values(22,"ABCD");
+call `dmgcp-del-ce.sos_db.sp_workflow`();

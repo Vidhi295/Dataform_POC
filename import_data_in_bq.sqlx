@@ -1,0 +1,8 @@
+config { type: "operations",schema: "ce_load_test",
+hasOutput: true}
+
+LOAD DATA INTO `dmgcp-del-ce.ce_load_test.load_csv_5dec`
+  FROM FILES(
+    format='CSV',
+    uris = ['gs://bkt-dmgcp-del-ce-temp/names/yob1880.txt']
+  )
