@@ -1,0 +1,15 @@
+config { type: "operations",schema: "ce_load_test",
+hasOutput: true}
+
+EXPORT DATA
+  OPTIONS (
+    uri = 'gs://bkt-dmgcp-del-ce-temp/names/*.csv',
+    format = 'CSV',
+    overwrite = true,
+    header = true,
+    field_delimiter = ',')
+AS (
+  SELECT name, division,roll_no
+  FROM `dmgcp-del-ce.ce_load_test.load_csv_5dec`
+  ORDER BY roll_no
+);
