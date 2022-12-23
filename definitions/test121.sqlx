@@ -1,0 +1,114 @@
+
+    config{
+        type='incremental',
+        unique_key='pk',
+        cluster_by=['EXPORTED_AT','ENVIRONMENT_ID','DEVICE_TYPE','DEVICE_BRAND'],
+        on_schema_change='sync_all_columns'}
+    )
+
+WITH cte as
+(
+    SELECT
+        EXPORTED_AT,
+        DATE(TO_TIMESTAMP(RECORD_REQUEST_BEGIN_TIMESTAMP_SECONDS)) AS COUNTED_AT,
+        RECORD_ENVIRONMENT_ID AS ENVIRONMENT_ID,
+        ASSET_INFO_ASSET_ID AS ASSET_ID,
+        --custom_domain_id was added after we started ingesting the logs so we keep the old logic to detect custom domains if the custom_domain_id is null
+        CASE 
+            WHEN custom_domain_id>0 AND custom_domain_id is not null THEN True
+            WHEN 
+                custom_domain_id is null AND
+                lower(RECORD_HOST) NOT LIKE '%mux.com%' AND
+                lower(RECORD_HOST) NOT LIKE '%storage.googleapis.com%' AND
+                upper(RECORD_CDN_HOST_TYPE)='CDN_HOST_EDGE' THEN True
+            ELSE False
+        END AS IS_CUSTOM_DOMAIN,
+        CASE WHEN 
+        (ASSET_INFO_VIDEO_BITRATE = 0 OR ASSET_INFO_VIDEO_BITRATE IS NULL)
+        AND lower(ASSET_INFO_CHUNK_TYPE)!='demuxed' 
+            THEN 'Audio'
+        ELSE 'Video'
+        END AS ASSET_TYPE,
+        RECORD_CDN AS CDN,
+        IP_LOOKUP_USER_AGENT_DEVICE_TYPE AS DEVICE_TYPE,
+        IP_LOOKUP_USER_AGENT_DEVICE_BRAND AS DEVICE_BRAND,
+        IP_LOOKUP_USER_AGENT_DEVICE_MODEL AS DEVICE_MODEL,
+        IP_LOOKUP_USER_AGENT_OS_NAME AS OS_NAME,
+        IP_LOOKUP_USER_AGENT_OS_VERSION AS OS_VERSION,
+        {{ dbt_utils.surrogate_key([
+                    "EXPORTED_AT",
+                    "COUNTED_AT",
+                    "RECORD_ENVIRONMENT_ID", 
+                    "ASSET_INFO_ASSET_ID",
+                    "RECORD_HOST",
+                    "IS_CUSTOM_DOMAIN",
+                    "ASSET_TYPE",
+                    "CDN",
+                    "DEVICE_TYPE",
+                    "DEVICE_BRAND",
+                    "DEVICE_MODEL",
+                    "OS_NAME",
+                    "OS_VERSION"
+                ])}} AS PK,        
+    --Totals
+        SUM(
+            IFF(
+                ASSET_INFO_SEGMENT_DURATION>0, ASSET_INFO_SEGMENT_DURATION, 0
+            )
+        )/60 AS MINUTES_DELIVERED_TOTAL,
+        SUM(
+            IFF(
+                RECORD_TOTAL_BYTES_SENT>0, RECORD_TOTAL_BYTES_SENT, 0
+            )
+        ) AS BYTES_SENT_TOTAL,
+    --Metrics by CDN host type  
+        --Minutes delivered
+        SUM(
+            IFF(
+                RECORD_CDN_HOST_TYPE='CDN_HOST_EDGE' AND ASSET_INFO_SEGMENT_DURATION>0, ASSET_INFO_SEGMENT_DURATION,0
+            )
+        )/60 AS MINUTES_DELIVERED_EDGE,
+        SUM(
+            IFF(
+                RECORD_CDN_HOST_TYPE='CDN_HOST_SHIELD' AND ASSET_INFO_SEGMENT_DURATION>0, ASSET_INFO_SEGMENT_DURATION,0
+            )
+        )/60 AS MINUTES_DELIVERED_SHIELD,
+        --Bytes sent
+        SUM(
+            IFF(
+                RECORD_CDN_HOST_TYPE='CDN_HOST_EDGE', RECORD_TOTAL_BYTES_SENT, 0
+                )
+        ) AS BYTES_SENT_EDGE,
+        SUM(
+            IFF(
+                RECORD_CDN_HOST_TYPE='CDN_HOST_SHIELD', RECORD_TOTAL_BYTES_SENT,0
+            )
+        ) AS BYTES_SENT_SHIELD,
+        COUNT(*) AS TOTAL_REQUESTS,
+        SUM(CASE WHEN RECORD_RESPONSE_STATUS_CODE >=200 and RECORD_RESPONSE_STATUS_CODE < 400 THEN 1 ELSE 0 END) AS REQUESTS_SUCCESSFUL,
+        SUM(CASE WHEN NOT(RECORD_RESPONSE_STATUS_CODE >=200 and RECORD_RESPONSE_STATUS_CODE < 400) THEN 1 ELSE 0 END) AS REQUESTS_FAILED
+    FROM 
+        {{ ref('stg_cdn_logs')}}        
+    WHERE
+        --We filter the request type so that the birate is accurate - for other requests, we have bytes but no duration
+        RECORD_MEDIA_REQUEST_TYPE in ('CHUNK_REQUEST','CHUNK_PART_REQUEST','DOWNLOAD_REQUEST')
+    {% if is_incremental() %}
+        AND 
+    exported_at > (SELECT MAX(exported_at) FROM {{ this }})
+    {% endif %}     
+    GROUP BY
+        PK,
+        EXPORTED_AT,
+        DATE(TO_TIMESTAMP(RECORD_REQUEST_BEGIN_TIMESTAMP_SECONDS)),
+        ENVIRONMENT_ID,
+        ASSET_ID,
+        IS_CUSTOM_DOMAIN,
+        ASSET_TYPE,
+        CDN,    
+        DEVICE_TYPE,
+        DEVICE_BRAND,
+        DEVICE_MODEL,
+        OS_NAME,
+        OS_VERSION
+)
+SELECT * FROM cte

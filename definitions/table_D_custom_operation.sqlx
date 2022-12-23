@@ -1,5 +1,23 @@
-config { type: "operations",schema: "sos_db",
-hasOutput: true}
+config { type: "operations"}
 
-insert into ${self()} values(21,"ABC");
-insert into ${self()} values(22,"ABCD")
+--schema: "sos_db",
+--hasOutput: true}
+
+--insert into ${self()} values(21,"ABC");
+
+
+/*BEGIN
+  insert into ${self()} values(21,"ABC");
+EXCEPTION WHEN ERROR THEN
+  IF NOT CONTAINS_SUBSTR(@@error.message, "already exists: dataset") THEN
+    RAISE USING MESSAGE = @@error.message;
+  END IF;
+END;*/
+
+BEGIN 
+  CREATE SCHEMA IF NOT EXISTS `dmgcp-del-ce.sos_db` OPTIONS(location="US"); 
+EXCEPTION WHEN ERROR THEN 
+  IF NOT CONTAINS_SUBSTR(@@error.message, "already exists: dataset") THEN 
+    RAISE USING MESSAGE = @@error.message; 
+  END IF; 
+END;
