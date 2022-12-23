@@ -1,10 +1,3 @@
-config {
-  type: "incremental",
-  uniqueKey: ["id"]
-}
-
-select id, name, uuid, source_timestamp, is_deleted from
-(
 select
 id,
 name,	
@@ -12,6 +5,5 @@ datastream_metadata.uuid as uuid,
 TIMESTAMP_MILLIS(datastream_metadata.source_timestamp) as source_timestamp,			
 datastream_metadata.is_deleted as is_deleted, row_number() over (partition by id order by TIMESTAMP_MILLIS(datastream_metadata.source_timestamp) desc) row_num
 from dmgcp-del-ce.sos_db.sosdb_emp
- 
-)a
-where row_num=1 and is_deleted=False
+${when(dataform.projectConfig.vars.run_file === "main")}
+

@@ -1,0 +1,8 @@
+
+config {type: "table",
+tags: ["vidhi"]}
+
+SELECT * from ${ref("table_A")}
+${ when(dataform.projectConfig.vars.run_file === "Vidhi295-patch-1",
+'')}
+
