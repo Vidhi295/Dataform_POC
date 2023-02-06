@@ -3,5 +3,3 @@ schema: "sos_db",name: "table_A"}
 
 
 select * from dmgcp-del-ce.sos_db.table_A
-UNION ALL
-select * from ${ref("table_D_custom_operation")}
